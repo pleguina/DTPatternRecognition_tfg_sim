@@ -116,11 +116,11 @@ class MBstation(object):
         L2 = 6 
         # If there is a shift, we have to choose the leftmost one
         # for reference.
-        if sign > 0:
+        if sign != 0:
             # if sign > 0: # SL1 is the leftmost
             # if sign < 0: # SL3 is the leftmost
             L1 = 2*(sign > 0)+6*(sign < 0)
-            L2 = 6*(sign < 0)+2*(sign > 0)
+            L2 = 6*(sign > 0)+2*(sign < 0)
 
 
         left = self.get_Layer(L1).get_cell(0).x
