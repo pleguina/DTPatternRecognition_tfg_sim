@@ -62,7 +62,7 @@ class Primitive(object):
             
             shifty = (1*(nsl1 < nsl3) - 1*(nsl1 > nsl3))*shifty
             y0 += shifty
-
+            
             # The x position will be shifted a certain
             # amount of cells, following the distribution
             # of SLs in CMS. 
@@ -118,7 +118,7 @@ class Primitive(object):
         x0_prim = self.x_center
 
         # Store this in a function that can be called anytime
-        self.produce_track = lambda x: [((xi-x0_prim-jm_x)*tan_corrected+y0) for xi in x]
+        self.produce_track = lambda x: [((xi-x0_prim-jm_x)*tan_corrected+y0_prim) for xi in x]
         return
  
     def load_data_from_csv(self, pars, attrs):
