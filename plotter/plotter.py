@@ -71,8 +71,8 @@ class plotter:
             patterns = []
             title = "Primitives in Wh%s - sector: %s - station: %s"
             wheel = int(prim[0].wheel)
-            sector = prim[0].sector
-            station = prim[0].station
+            sector = int(prim[0].sector)
+            station = int(prim[0].station)
             self.axes.set_title(title%(wheel, sector, station))
             for pri in prim: 
                 patterns.append(prim)
