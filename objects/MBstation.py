@@ -2,7 +2,7 @@ from objects.Layer import *
 
 class MBstation(object):
     nLayers = 8        
-    nCells = {"MB1" : 47, "MB2": 59, "MB3": 73, "MB4": 102}
+    nCells = {"MB1" : 49, "MB2": 59, "MB3": 73, "MB4": 96}
     
     """ 
          ::    Depending on the wheel the sign changes 
@@ -93,6 +93,7 @@ class MBstation(object):
 
         self.set_center()
         return
+
     def set_center(self):
         # == Definition of the center of the chamber:
         # The center is define by two coordinates:
@@ -108,26 +109,14 @@ class MBstation(object):
         # IMPORTANT: The center in the Y axis varies 1.8 cm for MB3 and MB4
         #            because there is no RPC there
 
-        # == Now, for X position
-        # For MB3, there is no shift, so we can use whichever
-        # combination of layers to compute the center
-        sign = self.shift_sign
-        L1 = 2
-        L2 = 6 
-        # If there is a shift, we have to choose the leftmost one
-        # for reference.
-        if sign != 0:
-            # if sign > 0: # SL1 is the leftmost
-            # if sign < 0: # SL3 is the leftmost
-            L1 = 2*(sign > 0)+6*(sign < 0)
-            L2 = 6*(sign > 0)+2*(sign < 0)
 
+        len_layer = self.nDriftCells*self.cellWidth
 
-        left = self.get_Layer(L1).get_cell(0).x
-        right = self.get_Layer(L2).get_cell(self.nDriftCells-1).x
+        centerx = (len_layer+self.cellWidth)/2.0
+        
 
-        centerx = (left + right)/2.0
         self.center = (centerx, centery)
+        print(self.center)
         return
 
     def get_center(self):

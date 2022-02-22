@@ -20,7 +20,8 @@ class Layer(object):
     def get_cell(self, cell_id):
         # Wires are numbered from 1 to nDriftCells. But python indexses from 0 to 1...
         # Need to be careful with this
-        return self.DriftCells[cell_id]
+        
+        return self.DriftCells[cell_id-1]
         
     def shift_layer(self, shiftx, shifty):
         for cellInLayer in self.DriftCells:

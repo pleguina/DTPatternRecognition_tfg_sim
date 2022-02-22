@@ -1,9 +1,10 @@
 import numpy as np
+import geometry as geom
 
 class Primitive(object):
     driftVel = 54e-4 #cm/ns
     
-    def __init__(self, pars, attrs, MB):
+    def __init__(self, chamber_info, hits, tdcs, lats, fits):
         # == Parameters from the log
         # // Event info
         self.event = -1
@@ -14,6 +15,7 @@ class Primitive(object):
         self.hits = []
         self.tdcs = []     
         self.lateralities = []
+        self.fits = []
 
         # // Fits
         self.Q = -1
@@ -27,20 +29,71 @@ class Primitive(object):
         self.id = -1
 
 
-        self.load_data_from_csv(pars, attrs)
-
         # Processed attributes
         self.trueTimes = []   
         self.x_pos = []
         self.y_pos = []
         self.semicells = []
 
+        self.currentMB = -1
         # Chamber attributes
-        self.currentMB = -1 
-
-        self.add_to_chamber(MB)
+        self.load_data(chamber_info, hits, tdcs, lats, fits)
+        
         return
-   
+
+    # == Setters and Getters
+
+    def load_data(self, chamber_info, hits, tdcs, lats, fits):
+        
+        self.set_attribute("MuonType", chamber_info[0])
+        self.set_attribute("wheel", int(chamber_info[1]))
+        self.set_attribute("sector", int(chamber_info[2]))
+        self.set_attribute("station", int(chamber_info[3]))
+        self.set_attribute("hits", hits)
+        self.set_attribute("tdcs", tdcs)
+        self.set_attribute("lateralities", lats)
+        self.set_attribute("fits", fits)
+        self.set_attribute("Q", fits[0])
+        self.set_attribute("phi", float(fits[1]))
+        self.set_attribute("phib", float(fits[2]))
+        self.set_attribute("bX", float(fits[3]))
+        self.set_attribute("Chi2", float(fits[4]))
+        self.set_attribute("x", float(fits[5]))
+        self.set_attribute("tanPsi", float(fits[6]))
+        self.set_attribute("t0", float(fits[7]))
+        
+        # == Load the geometry for the MB station associated to this primitive
+        MBobject = geom.stations["MB%d"%self.get_attribute("station")]
+        self.set_attribute("currentMB", MBobject)
+
+        self.add_to_chamber(MBobject)
+        return
+
+    def isDefined(self, attr):
+        if attr not in dir(self):
+            raise RuntimeError("[ERROR] Primitive object has no attribute %s"%attr)
+        return 
+    def set_attribute(self, attr, par):
+        self.isDefined(attr)
+        self.__setattr__(attr, par)
+        return
+    def get_attribute(self, attr):
+        self.isDefined(attr)
+        par = self.__getattribute__(attr)
+        return par
+    
+
+    def getX(self):            
+        return self.x_pos
+
+    def getY(self):
+        return self.y_pos
+
+    def set_trueTime(self):
+        self.trueTimes = [(tdc - self.t0) for tdc in self.tdcs]
+        return
+
+    
     def center_primitive(self, x0, y0):
         
         # In order to propagate properly the x position, we
@@ -121,27 +174,6 @@ class Primitive(object):
         self.produce_track = lambda x: [((xi-x0_prim-jm_x)*tan_corrected+y0_prim) for xi in x]
         return
  
-    def load_data_from_csv(self, pars, attrs):
-        for id, attr in enumerate(attrs):
-            if "\n" in attr: attr = attr.replace("\n", "")
-            par = pars[id]
-            
-            # Function to store different parameters from the logfile to different type of data.
-            # Works with lists
-            func = lambda par_list, convert_func : [convert_func(index) for index in par_list]      
-
-            nobrakets = ""
-            if "[" in par: nobrakets = par.replace("[", "").replace("]", "").strip(" ") 
-            if attr == "lateralities":
-                lista = nobrakets.split(",")
-                lista_float = [int(el) for el in lista]
-                par = func(lista_float, bool)
-            elif attr == "hits":                   par = func(nobrakets.split(","), int)
-            elif attr in ["lateralities", "tdcs"]: par = func(nobrakets.split(","), float)
-            elif attr == "MuonType":               par = nobrakets
-            elif attr not in ["Q", "id"]:          par = float(par)    
-            self.__setattr__(attr, par)
-        return
     
     def set_position_within_chamber(self):
         # X position is computed per hit
@@ -163,15 +195,7 @@ class Primitive(object):
             self.x_pos.append(x0)
             self.y_pos.append(centery)
   
-    def getX(self):            
-        return self.x_pos
-    def getY(self):
-        return self.y_pos
-
-    def set_trueTime(self):
-        self.trueTimes = [(tdc - self.t0) for tdc in self.tdcs]
-        return
-
+    
 
           
 
