@@ -14,17 +14,11 @@ class plotter:
                            1 : "blue"}
         self.fillcolors = {0: ["green", 1],
                            1: ["firebrick", 0.5]}   
-        self.markers = {"Bayes" : "o", "Std": "s"}
+        self.markers = {"[Bayes]" : "o", "[Std  ]": "s"}
         self.cells = []
         self.plot_DT()
         return
 
-        
-    def clear_patterns(self):
-        [ax[i].remove() for ax in self.pattern_axes for i in [0, 1]]
-        #[self.pattern_labels[label].remove() for label in range(len(self.pattern_labels))]
-        #[pattern[pattern].remove() for pattern in range(len(self.patterns))]
-        return
 
     def show(self):
         # Plot the legend  
@@ -80,7 +74,7 @@ class plotter:
                 self.plot_pattern(pri, counter)
                 counter+=1
             return
-
+        counter = 1
         x = prim.getX()
         y = prim.getY()
         # Plot the track extracted with the fit
@@ -100,4 +94,7 @@ class plotter:
         self.pattern_labels.append("Evt: %s (%s)"%(prim.id, prim.MuonType))
         return 
        
-
+    def save_canvas(self, name):
+        self.fig.savefig(name+".pdf")
+        self.fig.savefig(name+".png")
+        return
