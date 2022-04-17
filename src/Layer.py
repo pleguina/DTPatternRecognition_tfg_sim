@@ -30,6 +30,8 @@ class Layer(object):
         return
 
     # == Getters ==
+    def id(self):
+        return self.idy
     def get_ncells(self):
         nominal = self.nDriftCells
         additional = self.additional_cells 
@@ -38,12 +40,7 @@ class Layer(object):
 
     def get_cell(self, cell_id):
         ''' Method to get a cell from the list of cells '''
-        #if (cell_id-1) > len(self.get_cells()):
-        #    raise RuntimeError("Cell %d not in list of %d cells"%(cell_id-1, len(self.get_cells())))
         cell = self.get_cells()[cell_id-1]
-        #if (cell_id-1) != cell.idx:
-        #    raise RuntimeError("Wrong cell has been fetched! trying to fetch %d and got %d"%(cell_id-1, cell.idx))
-        
         # This can be vastly improved with lambda functions as callbacks...
         return cell
 

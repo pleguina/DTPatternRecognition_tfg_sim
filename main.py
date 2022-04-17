@@ -4,7 +4,7 @@ Code for dealing with Pseudo-Bayes patterns
 
 # === Main imports
 # -- Utilities
-from utils.plotter import *
+from utils.pattern_plotter import *
 from utils.geometry import *
 
 # -- Source files
@@ -35,7 +35,14 @@ if __name__ == "__main__":
     geom = opts.geometry
     
     if (mode == "train"):
-        trainer = pattern_trainer(geom)
+        
+        trainer = pattern_trainer(geom, (-1, 1, "MB1"))
+        trainer.generate_patterns("correlated")
+        trainer.generate_patterns("uncorrelated_SL1")
+        trainer.generate_patterns("uncorrelated_SL3")
+
+        pats = trainer.get_patterns()
+        print(len(pats))
 
     elif (mode == "plot"):
         plotter = pattern_plotter()
