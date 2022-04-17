@@ -32,6 +32,7 @@ class DriftCell(object):
     # == Getters ==
     def id(self):
         return self.idx
+        
     def get_parent(self):
         return self.parent
 

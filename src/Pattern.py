@@ -7,13 +7,6 @@ class Pattern(object):
         self.overlap = 0
         self.overlapsw = []
 
-    def hasseed(self, hit):
-        pass
-        # if hit == seed:
-        #     return True
-        # else:
-        #     return False
-
     def hashit(self, hit):
         for h in self.hits:
             if h[:2] == hit:

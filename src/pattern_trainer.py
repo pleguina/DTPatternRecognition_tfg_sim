@@ -12,6 +12,7 @@ mode       : To run correlated or uncorrelated patterns.
 """
 
 from src.Muon import * 
+from src.Pattern import *
 
 class pattern_trainer(object):
     available_modes = [
@@ -29,11 +30,24 @@ class pattern_trainer(object):
         self.chamb_fail = geom(wh, sc)[chamb_name+"_tofail"]            
 
         # -- Output containers
+        self.allMuons    = []
+        self.allSeeds    = []
         self.allPatterns = []
-        self.allSeeds = []
         return
+
+    def get_chamb(self):
+        return self.chamb
+    def get_chamb_fail(self):
+        return self.chamb_fail
+
     def get_patterns(self):
         return self.allPatterns   
+
+    def get_muons(self):
+        return self.allMuons
+
+    def get_seeds(self):
+        return self.allSeeds
 
     def generate_patterns(self, mode):   
         ''' 
@@ -111,9 +125,11 @@ class pattern_trainer(object):
                                 muon = Muon(x0, y0, m)
                                 failer.check_in(muon)
                             
-                                self.allPatterns.append(muon)
-                                seed = [layer_s, layer_f, cell_f.id() - seed_cell.id()]
+                                self.allMuons.append(muon)
+                                seed = [layer_s.id(), layer_f.id(), cell_f.id() - seed_cell.id()]
                                 self.allSeeds.append(seed)
+                                pat = Pattern(seed, muon.getPattern())
+                                self.allPatterns.append(pat)
         return 
         
 

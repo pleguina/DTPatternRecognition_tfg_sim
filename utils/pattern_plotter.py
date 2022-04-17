@@ -11,7 +11,7 @@ import matplotlib.patches as patches
 from src.Primitive import *
 import os
 
-class plotter:
+class pattern_plotter:
     def __init__(self, MB):
         ''' Constructor '''
         # -- Save the station to be plot
@@ -46,7 +46,7 @@ class plotter:
         axes = fig.add_subplot(111)
 
         cellWidth = self.current_DT.get_layer(0).get_cell(1).get_width()
-        nDriftCells = self.current_DT.get_layer(0).get_ncells()
+        nDriftCells = self.current_DT.get_nDriftCells()
         xlim = nDriftCells*cellWidth*1.05
 
         axes.set_xlabel("x[cm]")
@@ -82,17 +82,20 @@ class plotter:
                 self.plot_cell(xmin, ymin, width, height, edgecolor = 'k')
         return 
 
-    def plot_muons(self, muons, color = '-g'):
+    def plot_muons(self, muons, color = '-r'):
         ''' Method to plot muon trajectories '''
-        if isinstance(muons, list):
-            for muon in muons: plot_muons(muon)
-        x_range = np.linspace(-600, 600) # arbitrary        
-        self.axes.plot(x_range, muon.getY(x_range, 0.), color)
+        for muon in muons: 
+            x_range = np.linspace(-600, 600) # arbitrary        
+            if muon.get_slope() < 0:
+                color = "-k"
+            else:
+                color = "-r"
+            self.axes.plot(x_range, muon.getY(x_range, 0.), color)
         return
 
-    def save_canvas(self, name, path = "./results"):
-        if not os.path.exists(path):
-            os.system("mkdir -p %s"%("./plots/" + path))
-        self.fig.savefig("./plots/" + path + "/" + name+".pdf")
-        self.fig.savefig("./plots/" + path + "/" + name+".png")
+    def save_canvas(self, path, name = "plot"):
+        if not os.path.exists("%s/plots"%path):
+            os.system("mkdir -p %s/plots"%path)
+        self.fig.savefig("%s/plots/%s"%(path, name+".pdf"))
+        self.fig.savefig("%s/plots/%s"%(path, name+".png"))
         return
