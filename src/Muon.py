@@ -80,8 +80,4 @@ class Muon(object):
             self.pattern.append([self.hits[i].parent.idy, self.hits[i].idx, self.lateralities[i]])
         return self.pattern
 
-    def getRecoPattern(self):
-        self.recopattern = []
-        for i in range(len(self.hits)):
-            self.recopattern.append([self.hits[i].parent.idy, self.hits[i].idx])
-        return self.recopattern
+    

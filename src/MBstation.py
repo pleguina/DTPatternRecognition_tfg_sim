@@ -14,7 +14,6 @@ from src.Layer import *
 
 class MBstation(object):
     nLayers = 8        
-    
     """ 
          ::    Depending on the wheel the sign changes 
              -half width of a Drift cell  # mm for MB1 
@@ -154,6 +153,9 @@ class MBstation(object):
         
         shift_signs = self.get_shift_signs()
         sign  = shift_signs[entryname][station][sector]
+        
+        # FIXME: quick workaround for MB4 sc4 and 10...
+        if isinstance(sign, tuple): sign = sign[0]
         self.shift_sign = sign
         return 
 
