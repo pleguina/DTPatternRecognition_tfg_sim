@@ -1,4 +1,3 @@
-
 """
 ----------------------------------------------------------
                 Class definition of a Muon
@@ -17,10 +16,40 @@ class Muon(object):
         # == Containers to store hits 
         self.hits = []
         self.lateralities = []
-    
         return
 
+    def getPattern(self):
+        hits = self.get_hits()
+        lats = self.get_lateralities()
+        pattern = []
+        for ihit, hit in enumerate(hits):
+            pattern.append([ hit.parent.idy, hit.idx, lats[ihit] ])
+
+        # -- Save the pattern in the object
+        self.pattern = pattern
+        return pattern
+
+    def get_lateralities(self):
+        return self.lats
+
+    def get_hits(self):
+        return self.hits
+
     # == Setters and Getters
+    def add_hit(self, id_cell):
+        self.hits.append(id_cell)
+        return
+
+    def add_lat(self, lat):
+        self.lateralities.append(lat)
+        return
+
+    def get_hits(self):
+        return self.hits
+    
+    def get_lateralities(self):
+        return self.lateralities
+
     def set_position(self, x0, y0):
         ''' Set position of the primitive '''
         self.x0 = x0
@@ -46,7 +75,12 @@ class Muon(object):
     def getY(self, x, ydef):
         ''' This method returns the y position
         of the muon with respect a given X.'''
-        m = self.get_slope()
+        globalDTwidth = 4.2
+        globalDTheight = 1.3
+        if self.m == 100000: 
+            return (abs(x - self.x0) < 0.05*globalDTwidth)*ydef + (abs(x - self.x0) > 0.05*globalDTwidth)*10000000000  
+
+        m  = self.get_slope()
         x0 = self.get_x_seed()
         y0 = self.get_y_seed()
 
@@ -59,25 +93,3 @@ class Muon(object):
     def get_semicells(self):
         ''' Return semicells'''
         return self.semicells
-    
-    def add_hit(self, id_cell):
-        self.hits.append(id_cell)
-        return
-
-    def add_lat(self, lat):
-        self.lateralities.append(lat)
-        return
-    def get_hits(self):
-        return self.hits
-
-    def set_trueTime(self):
-        self.trueTimes = [(tdc - self.t0) for tdc in self.tdcs]
-        return
-
-    def getPattern(self):
-        self.pattern = []
-        for i in range(len(self.hits)):
-            self.pattern.append([self.hits[i].parent.idy, self.hits[i].idx, self.lateralities[i]])
-        return self.pattern
-
-    

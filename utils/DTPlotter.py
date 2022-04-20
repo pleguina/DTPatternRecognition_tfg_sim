@@ -8,10 +8,10 @@ MB : Chamber to be plot
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from src.Primitive import *
+from particle_objects.Primitive import *
 import os
 
-class pattern_plotter:
+class DTPlotter(object):
     def __init__(self, MB):
         ''' Constructor '''
         # -- Save the station to be plot
@@ -47,11 +47,13 @@ class pattern_plotter:
 
         cellWidth = self.current_DT.get_layer(0).get_cell(1).get_width()
         nDriftCells = self.current_DT.get_nDriftCells()
+
+        ylim = self.current_DT.get_layers()[7].get_cell(1).y
         xlim = nDriftCells*cellWidth*1.05
 
         axes.set_xlabel("x[cm]")
         axes.set_ylabel("y[cm]")
-        axes.set_ylim(-0.5, 50)
+        axes.set_ylim(-0.5, ylim*1.5)
         axes.set_xlim(-xlim, xlim)
 
         # -- Save in attributes for later acces

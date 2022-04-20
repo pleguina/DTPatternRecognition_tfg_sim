@@ -10,7 +10,7 @@ additional_cells : Number of cells added to check if generated
                    muons lie within the next chamber.
 ----------------------------------------------------------
 """
-from src.Layer import *
+from geometry.Layer import *
 
 class MBstation(object):
     nLayers = 8        

@@ -1,9 +1,13 @@
-from src.MBstation import *
+from geometry.MBstation import *
+from geometry.Layer import *
+from geometry.DriftCell import *
+from particle_objects.Primitive import *
+from particle_objects.Pattern import *
 
-def CMS(wheel, sector):
+def CMSDT(wheel, sector):
     globalDTheight = 1.3
     SLgap     = 28.7 - globalDTheight*8 # originally, it was 29 - globalDTheight*8  ????
-    nDTMB1 = 47
+    nDTMB1 = 80
     nDTMB2 = 59
     nDTMB3 = 73
     nDTMB4 = 102

@@ -15,7 +15,7 @@ idy = 0      | 1 | 2 |   |...
 ----------------------------------------------------------
 """
 
-from src.DriftCell import DriftCell
+from geometry.DriftCell import DriftCell
 
 class Layer(object):    
     ''' Class definition of a layer '''

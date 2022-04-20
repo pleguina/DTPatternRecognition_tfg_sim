@@ -1,5 +1,4 @@
 import numpy as np
-import utils.geometry as geom
 
 class Primitive(object):
     driftVel = 54e-4 #cm/ns

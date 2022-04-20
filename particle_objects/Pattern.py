@@ -1,12 +1,18 @@
 class Pattern(object):
     def __init__(self, seeds, hits):
+        ''' constructor '''
         self.seeds = seeds
         self.hits  = hits
-        self.len   = len(hits)
+        
         self.busted = False
         self.overlap = 0
         self.overlapsw = []
+        return
 
+    
+    def get_seeds(self):
+        return self.seeds
+        
     def hashit(self, hit):
         for h in self.hits:
             if h[:2] == hit:
