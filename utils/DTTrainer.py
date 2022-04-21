@@ -63,13 +63,14 @@ class DTTrainer(object):
         ''' Run training for each loaded training configuration '''
         for mode in self.modes:
             seeders, failers, uncorr = self.modes[mode]
-            self.allPatterns[mode] = []
-            self.allMuons[mode] = []
-            self.allSeeds[mode] = []
+            self.allPatterns[mode] = {}
+            self.allMuons[mode] = {}
+            self.allSeeds[mode] = {}
             self.generate_patterns(mode, seeders, failers, uncorr)
         return
 
     def generate_patterns(self, mode, seeders , failers, uncorr):   
+
         ''' 
         Algorithm to generate patterns
         -------------------------------------------------------
@@ -103,6 +104,15 @@ class DTTrainer(object):
                         if (layer_f.id() <= layer_s.id()) and uncorr: 
                             continue
 
+                        # Create a list to store patterns for a given combination of layers
+                        label = "s%sf%s"%(layer_s.id(), layer_f.id())
+                        if label not in self.allMuons[mode]:
+                            self.allMuons[mode][label] = []
+                        if label not in self.allSeeds[mode]:
+                            self.allSeeds[mode][label] = []
+                        if label not in self.allPatterns[mode]:
+                            self.allPatterns[mode][label] = []
+
                         print("\t - Seeding in layer {} in failer".format(layer_f.id()))                    
                         cells_f = layer_f.get_cells()
                         
@@ -129,24 +139,32 @@ class DTTrainer(object):
                                 hits = muon.getPattern()
                                 pat = Pattern(seed, hits)
 
-                                self.allMuons[mode].append(muon)
-                                self.allSeeds[mode].append(seed)
-                                self.allPatterns[mode].append(pat)
+                                self.allMuons[mode][label].append(muon)
+                                self.allSeeds[mode][label].append(seed)
+                                self.allPatterns[mode][label].append(pat)
 
         return 
 
     def plot_muons(self, outpath):
         ''' Method to plot identified muon trajectories in a chamber '''
         chamb = self.get_chamb_fail() # Use the fail chamber to plot muon trajectories
-                                        # This basically centers them... Not important
-
+                                      # This basically centers them... Not important
+        
         for mode in self.modes:
-            muons = self.get_muons()[mode] 
+            muon_layers = self.get_muons()[mode]  
+            inclusive = []
+            for muons in muon_layers:
+                inclusive.extend(muon_layers[muons])
+                dtplotter = DTPlotter(chamb)
+                dtplotter.plot_chamber()
+                dtplotter.plot_muons(muon_layers[muons])
+                dtplotter.save_canvas("%s/"%outpath, mode+"_"+muons)
+
+            inclusive.extend(muon_layers[muons])
             dtplotter = DTPlotter(chamb)
-
             dtplotter.plot_chamber()
-            dtplotter.plot_muons(muons)
-            dtplotter.save_canvas("%s/"%outpath, mode)
-
+            dtplotter.plot_muons(inclusive)
+            dtplotter.save_canvas("%s/"%outpath, mode+"_inclusive")
+            
         return
             

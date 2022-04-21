@@ -25,6 +25,9 @@ class Pattern(object):
     def genHits(self, extra = 0, reverse = 1):
         return [[h[0],reverse*h[1]+extra, h[2]] for h in self.hits]
 
+    def get_hits(self):
+        return self.hits
+        
     def isEqual(self, other):
         isEqual = True
         for h in self.hits:
