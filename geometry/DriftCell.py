@@ -111,7 +111,7 @@ class DriftCell(object):
         # Same applies for the upper part of the cell
         above_cell = min(y_position_left, y_position_right) > y_cell + height
 
-        if below_cell or above_cell:
+        if below_cell or above_cell and not(muon.get_slope()  == 100000):
             return (False, False, False)
 
 	    # If you ara here, then the muon IS inside the CELL

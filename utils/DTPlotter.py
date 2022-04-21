@@ -53,8 +53,8 @@ class DTPlotter(object):
 
         axes.set_xlabel("x[cm]")
         axes.set_ylabel("y[cm]")
-        axes.set_ylim(-0.5, ylim*1.5)
-        axes.set_xlim(-xlim, xlim)
+        axes.set_ylim(-0.5, 30)
+        axes.set_xlim(-100, 100)
 
         # -- Save in attributes for later acces
         self.fig = fig
