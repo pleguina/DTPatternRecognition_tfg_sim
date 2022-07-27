@@ -51,7 +51,7 @@ class MBstation(object):
         ''' Constructor '''
         self.Layers = []
 
-# == Chamber related parameters
+        # == Chamber related parameters
         self.set_wheel(wheel) 
         self.set_sector(sector)
         self.set_MBtype(MBtype)

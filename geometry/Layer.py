@@ -32,6 +32,7 @@ class Layer(object):
     # == Getters ==
     def id(self):
         return self.idy
+
     def get_ncells(self):
         nominal = self.nDriftCells
         additional = self.additional_cells 
