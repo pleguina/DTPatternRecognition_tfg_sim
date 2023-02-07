@@ -43,9 +43,15 @@ Here's a small list of things someone can do in order to work with the geometry.
    * `DriftCell.get_center()`: returns the center position of the cell.
    * DriftCell positions are defined in the frame of reference that sits in the lower-leftmost corner of the first cell in the first layer of SL1 (SL1-L1-Wire0). 
 
-   
-    
+## How to generate digis from ntuples
 
+```
+python3 dumpDTDigisFromNtuples.py --inputFolder /path/to/folder/with/ntuples/ --nevents $nevents --outpath  outpath_name 
+```
+ * You can also pass `--njobs [ncores]` to run in parallel (recommended for large samples). 
 
-
+### example:
+```
+python3 dumpDTDigisFromNtuples.py --inputFolder /eos/user/c/cvicovil/ZprimeToMuMu_M-6000_TuneCP5_14TeV-pythia8/ZprimeToMuMu_M-6000_TuneCP5_14TeV-pythia8/230204_175448/0000/ --nevents 100000 --outpath  ZprimeToMuMu_M-6000_TuneCP5_14TeV-pythia8 --njobs 6
+```
 
