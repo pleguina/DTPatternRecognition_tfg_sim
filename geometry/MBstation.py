@@ -149,7 +149,7 @@ class MBstation(object):
         elif wheel < 0:
             entryname += "<0"
         else:
-            entryname += "0"
+            entryname += "=0"
         
         shift_signs = self.get_shift_signs()
         sign  = shift_signs[entryname][station][sector]

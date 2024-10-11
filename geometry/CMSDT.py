@@ -3,6 +3,8 @@ from geometry.Layer import *
 from geometry.DriftCell import *
 from particle_objects.Primitive import *
 from particle_objects.Pattern import *
+from particle_objects.Muon import *
+
 
 def CMSDT(wheel, sector, station):
     globalDTheight = 1.3

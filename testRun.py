@@ -1,15 +1,21 @@
 '''
 Code for doing DT Trigger
 '''
-from geometry.MBstation import MBstation
-from geometry.Layer import Layer
-from geometry.DriftCell import DriftCell
+
 from geometry.CMSDT import CMSDT
+from particle_objects.Muon import Muon
+from plotter.plotter import Plotter
 
-chambers = CMSDT(wheel, sector, station)# Python will start executing things here 
-stations = {"MB1" : MB1, "MB2" : MB2, "MB3" : MB3, "MB4" : MB4}
+import matplotlib.pyplot as plt
+import numpy as np
 
-MB1 = stations["MB1"]
+wheel = 0
+sector = 1
+station = 1
+
+MB1 = CMSDT(wheel, sector, station)# Python will start executing things here 
+
+
 
 # Global parameters
 np.random.seed(4318937)
@@ -30,7 +36,7 @@ for n in range(nTrueMuons):
     
     mm          = Muon(np.random.rand()*200-98.7,1., 1./((np.random.rand())))
     MB1.check_in(mm)
-    trueHits += mm.getRecoPattern()
+    trueHits += mm.getPattern()
     trueMuons.append(mm)
 
 #And now generate a couple of points with random noise
@@ -68,3 +74,10 @@ print("==========================================================")
 print("==========================================================")
 
 
+#Plot it
+
+p = Plotter(MB1)
+p.plot_pattern(trueMuons)
+p.save_canvas("prueba")
+
+plt.show()
