@@ -2,7 +2,16 @@
 This repo contains a set of tools that can be used to implement pattern recognition algorithms
 considering the geometrical features of the CMS DT system.
 
-# Usage
+## Installation 
+
+```
+python3.11 -m venv pyenv
+source <name_of_venv>/bin/activate
+pip install .
+
+```
+
+## Usage
 The user has to provide a python file with the implementation of the pattern recognition
 algorithm. The geometry of the DTs can be accessed by just importing the following libraries:
 
