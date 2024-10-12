@@ -1,11 +1,18 @@
+import sys
+import os
+
+# Add the base directory (one level up from tests) to the system path
+# This allows the test to access the modules in the base directory
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 '''
-Code for doing DT Trigger
+Generic test to handle the data extraction and processing steps
 '''
 
 from geometry.CMSDT import CMSDT
-from particle_objects.Muon import Muon
+from particle_objects.Muon import *
 from plotter.plotter import Plotter
-from plotter.cmsDraw import draw_cms_muon_chambers, drawCMS_RZ
+from plotter.cmsDraw import *
 from particle_objects.Digis import *
 import matplotlib.pyplot as plt
 import numpy as np
@@ -93,19 +100,8 @@ def main():
 
     # Step 10: Summarize data availability
     summarize_data_availability(df_combined)
-
-    # Step 11: Find first non-empty data
-    result = find_first_non_empty_filter(df_combined)
-    if result:
-        specific_event_number, specific_wheel, specific_sector, specific_station = result
-        print(f"\nYou have available data in Event {specific_event_number}, Wheel {specific_wheel}, Sector {specific_sector}, Station {specific_station} !!!")
-    else:
-        print("\nNo non-empty data found.")
-        
-    
-    process_digis_by_station_combined_dummy(df_combined, specific_event_number, specific_wheel, specific_sector)
-    
-    # Find the station with the most digis and get digi_counts
+            
+    # Find the station with the most digis and get digi_counts so we get a nice number of digis to process
     max_station_info, digi_counts = find_station_with_most_digis(df_combined, return_digi_counts=True)
     if max_station_info is not None and not max_station_info.empty:
         row = max_station_info.iloc[0] # Get the first row
@@ -118,37 +114,29 @@ def main():
     else:
         print("\nNo station with digis found.")
         
-    process_digis_by_station_combined_dummy(df_combined, event_number, wheel, sector)
+    #process_digis_by_station_combined_dummy(df_combined, event_number, wheel, sector)
+    
+    #Get digis and segments for the event
+    
+    #Seems that in station 3 are lots of digis but no segments ??¿, we pick station 2
     
     df_digis = get_digis_for_event(df_combined, event_number, wheel, sector, 2)
-    df_segments = get_segments_for_event(df_combined, event_number, wheel, sector,2)
-    # Print concise summary of the DataFrame structure
-    print("Digis DataFrame structure:")
-    print(df_digis.info())  # Provides column names, non-null counts, and data types
+    df_segments = get_segments_for_event(df_combined, event_number, wheel, sector, 2)
 
-    print("\nFirst 5 rows of the Digis DataFrame:")
-    print(df_digis.head())  # Shows the first 5 rows of the DataFrame
-
-    print("\nSummary statistics of the Digis DataFrame:")
-    print(df_digis.describe())  # Shows statistical summary of the numeric columns
-
-    # Repeat for the segments DataFrame
-    print("\nSegments DataFrame structure:")
-    print(df_segments.info())
-
-    print("\nFirst 5 rows of the Segments DataFrame:")
-    print(df_segments.head())
-
-    print("\nSummary statistics of the Segments DataFrame:")
-    print(df_segments.describe())
+    #Plot the station
+    
+    draw_cms_muon_chambers(wheel, sector, 2)
+    
+    #Plot the digis and segments
+    
     MB = CMSDT(wheel, sector, station)  # Replace with actual initialization if necessary    
     #draw_cms_muon_chambers(-1*wheel, sector, station)
     p = Plotter(MB)
     p.plot_digis(df_digis)
     p.plot_segments(df_segments)
+    plt.show()
     p.save_canvas("prueba")
 
-plt.show()
 
 if __name__ == "__main__":
     main()

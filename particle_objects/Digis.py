@@ -352,6 +352,12 @@ def process_digis_by_station_combined_dummy(df_combined, specific_event_number, 
                 seg_dirLoc_x = row['seg_dirLoc_x']
                 seg_dirLoc_y = row['seg_dirLoc_y']
                 seg_dirLoc_z = row['seg_dirLoc_z']
+                seg_posGlb_phi = row['seg_posGlb_phi']
+                seg_posGlb_eta = row['seg_posGlb_eta']
+                seg_dirGlb_phi = row['seg_dirGlb_phi']
+                seg_dirGlb_eta = row['seg_dirGlb_eta']
+                seg_phi_t0 = row['seg_phi_t0']
+                seg_phi_vDrift = row['seg_phi_vDrift']
                 seg_phi_normChi2 = row['seg_phi_normChi2']
                 seg_phi_nHits = row['seg_phi_nHits']
 
@@ -365,6 +371,8 @@ def process_digis_by_station_combined_dummy(df_combined, specific_event_number, 
                     print(f"    pos_SL1: {seg_posLoc_x[i]}, pos_SL3: {seg_posLoc_y[i]}, pos_midPlane: {seg_posLoc_z[i]}")
                     print(f"    pos_x: {seg_posLoc_x[i]}, pos_y: {seg_posLoc_y[i]}, pos_z: {seg_posLoc_z[i]}")
                     print(f"    dirLoc_x: {seg_dirLoc_x[i]}, dirLoc_y: {seg_dirLoc_y[i]}, dirLoc_z: {seg_dirLoc_z[i]}")
+                    print(f"    posGlb_phi: {seg_posGlb_phi[i]}, posGlb_eta: {seg_posGlb_eta[i]}")
+                    print(f"    dirGlb_phi: {seg_dirGlb_phi[i]}, dirGlb_eta: {seg_dirGlb_eta[i]}")
                     print(f"    phi_normChi2: {seg_phi_normChi2[i]}, phi_nHits: {seg_phi_nHits[i]}")
                     print(f"    phi_t0: {row['seg_phi_t0'][i]}, phi_vDrift: {row['seg_phi_vDrift'][i]}")
                     print(f"    phi_normChi2: {row['seg_phi_normChi2'][i]}, z_normChi2: {row['seg_z_normChi2'][i]}, z_nHits: {row['seg_z_nHits'][i]}")

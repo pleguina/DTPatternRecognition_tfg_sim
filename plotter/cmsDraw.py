@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.patches as patches
 import numpy as np
 
@@ -310,4 +311,94 @@ def drawCMS_RZ():
     ax.grid(True, which='both', linestyle='--', linewidth=0.5)
 
     # Show the plot
+    plt.show()
+    
+def drawCoordinates_test():
+    
+
+    # Define chamber 3D positions (X, Y, Z) and labels
+    """
+    Plots the chamber positions and a segment with given global phi/eta coordinates.
+
+    Parameters:
+    posGlb_phi (float): Global position phi in radians.
+    posGlb_eta (float): Global position eta (pseudorapidity).
+    dirGlb_phi (float): Global direction phi in radians.
+    dirGlb_eta (float): Global direction eta (pseudorapidity).
+    r (float): Radial distance (same as z-coordinate of the chamber).
+
+    Returns:
+    None
+    """
+    
+    posGlb_phi=1.4642149209976196, 
+    posGlb_eta=0.7911032438278198, 
+    dirGlb_phi=1.4652460813522339, 
+    dirGlb_eta=0.6734017133712769, 
+    r=533.35
+    # Define chamber 3D positions (X, Y, Z) and labels
+    positions_3d = [
+        (720.2, -94.895, 533.35, 'Wh:2 St:4 Se:1'),
+        (671.159, 277.919, 533.35, 'Wh:2 St:4 Se:2'),
+        (442.281, 576.264, 533.35, 'Wh:2 St:4 Se:3'),
+        (160.75, 720.2, 533.35, 'Wh:2 St:4 Se:4'),
+        (-160.75, 720.2, 533.35, 'Wh:2 St:4 Se:13'),
+        (-442.281, 576.264, 533.35, 'Wh:2 St:4 Se:5'),
+        (-671.159, 277.919, 533.35, 'Wh:2 St:4 Se:6'),
+        (-720.2, -94.895, 533.35, 'Wh:2 St:4 Se:7'),
+        (-580.461, -435.011, 533.35, 'Wh:2 St:4 Se:8'),
+        (-356.143, -628.824, 533.35, 'Wh:2 St:4 Se:9'),
+        (-136.77, -720.2, 533.35, 'Wh:2 St:4 Se:10'),
+        (136.77, -720.2, 533.35, 'Wh:2 St:4 Se:14'),
+        (356.143, -628.824, 533.35, 'Wh:2 St:4 Se:11'),
+        (580.461, -435.011, 533.35, 'Wh:2 St:4 Se:12')
+    ]
+
+    # Convert from phi/eta to Cartesian coordinates for position
+    segment_pos_x = r * np.cos(posGlb_phi)
+    print(segment_pos_x)    
+    segment_pos_y = r * np.sin(posGlb_phi)
+    print(segment_pos_y)
+    segment_pos_z = r * np.sinh(posGlb_eta)
+    print(segment_pos_z)
+    segment_pos = (segment_pos_x, segment_pos_y, segment_pos_z)
+    print("--------------------")
+    # Convert from phi/eta to Cartesian coordinates for direction vector (assuming unit direction)
+    segment_dir_x = np.cos(dirGlb_phi)
+    print(segment_dir_x)
+    segment_dir_y = np.sin(dirGlb_phi)
+    print(segment_dir_y)
+    segment_dir_z = np.sinh(dirGlb_eta)
+    print(segment_dir_z)
+    segment_dir = (segment_dir_x, segment_dir_y, segment_dir_z)
+
+    # Print the segment information
+    print("Segment:")
+    print("  Global Position (x, y, z):", segment_pos)
+    print("  Global Direction (dir_x, dir_y, dir_z):", segment_dir)
+
+    # Create a 3D plot
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Plot the chambers
+    for x, y, z, label in positions_3d:
+        ax.scatter(x, y, z, color='blue')
+        ax.text(x, y, z, label, fontsize=9, ha='right')
+
+    # Plot the segment position
+    ax.scatter(*segment_pos, color='red', label='Segment Position')
+
+    # Plot the direction vector of the segment
+    ax.quiver(segment_pos[0], segment_pos[1], segment_pos[2], 
+              segment_dir[0], segment_dir[1], segment_dir[2], 
+              color='green', length=100, normalize=True, label='Segment Direction')
+
+    # Set axis labels and title
+    ax.set_xlabel('X Position')
+    ax.set_ylabel('Y Position')
+    ax.set_zlabel('Z Position')
+    ax.set_title('3D Chamber Positions and Segment')
+
+    plt.legend()
     plt.show()
