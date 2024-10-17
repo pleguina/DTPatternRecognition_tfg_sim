@@ -1,5 +1,7 @@
 import pandas as pd
 import uproot
+import random
+
 # Define the filtering function
 
 def load_root_file(root_file_path, tree_name):
@@ -500,8 +502,213 @@ def get_segments_for_event(df_combined, event_number, wheel, sector, station):
                     'dirLoc_z': row['seg_dirLoc_z'][i],
                     'phi_normChi2': row['seg_phi_normChi2'][i],
                     'phi_nHits': row['seg_phi_nHits'][i],
+                    'posLoc_x_SL1': row['seg_posLoc_x_SL1'][i],
+                    'posLoc_x_SL3': row['seg_posLoc_x_SL3'][i],
                     't0': row['seg_phi_t0'][i],
                     'vDrift': row['seg_phi_vDrift'][i]
                 })
         return pd.DataFrame(segments_data)
 
+
+def generate_combined_dataframe(root_file_path, tree_name):
+    """
+    Generate a combined DataFrame of segments and digis from a ROOT file.
+    
+    Parameters:
+    - root_file_path (str): Path to the ROOT file containing digis and segments.
+    - tree_name (str): Name of the tree in the ROOT file.
+    
+    Returns:
+    - pd.DataFrame: Combined DataFrame containing both digis and segments.
+    """
+    # Load the ROOT file and tree
+    tree = load_root_file(root_file_path, tree_name)
+    if tree is None:
+        print("Failed to load ROOT file or tree.")
+        return None
+    
+    # Define the branches to extract
+    branches_to_extract = [
+        'event_eventNumber',
+        'digi_nDigis',
+        'digi_wheel',
+        'digi_sector',
+        'digi_station',
+        'digi_superLayer',
+        'digi_layer',
+        'digi_wire',
+        'digi_time',
+        'seg_nSegments',
+        'seg_wheel',
+        'seg_sector',
+        'seg_station',
+        'seg_hasPhi',
+        'seg_hasZed',
+        'seg_posLoc_x',
+        'seg_posLoc_y',
+        'seg_posLoc_z',
+        'seg_dirLoc_x',
+        'seg_dirLoc_y',
+        'seg_dirLoc_z',
+        'seg_phi_normChi2',
+        'seg_phi_nHits',
+        'seg_posLoc_x_SL1',
+        'seg_posLoc_x_SL3',
+        'seg_posLoc_x_midPlane',
+        'seg_posGlb_phi',
+        'seg_posGlb_eta',
+        'seg_dirGlb_phi',
+        'seg_dirGlb_eta',
+        'seg_phi_t0',
+        'seg_phi_vDrift',
+        'seg_z_normChi2',
+        'seg_z_nHits'
+    ]
+    
+    # Extract data from the tree
+    arrays = extract_data(tree, branches_to_extract)
+    if arrays is None:
+        print("Failed to extract data from ROOT file.")
+        return None
+    
+    # Define segment numeric branches
+    seg_numeric_branches = [
+        'seg_wheel', 'seg_sector', 'seg_station',
+        'seg_hasPhi', 'seg_hasZed',
+        'seg_posLoc_x', 'seg_posLoc_y', 'seg_posLoc_z',
+        'seg_dirLoc_x', 'seg_dirLoc_y', 'seg_dirLoc_z',
+        'seg_phi_normChi2', 'seg_phi_nHits',
+        'seg_posLoc_x_SL1', 'seg_posLoc_x_SL3',
+        'seg_posLoc_x_midPlane', 'seg_posGlb_phi',
+        'seg_posGlb_eta', 'seg_dirGlb_phi',
+        'seg_dirGlb_eta', 'seg_phi_t0',
+        'seg_phi_vDrift', 'seg_phi_normChi2',
+        'seg_z_normChi2', 'seg_z_nHits'
+    ]
+    
+    # Build events DataFrame
+    df_events = build_events_dataframe(arrays, seg_numeric_branches)
+    if df_events.empty:
+        print("Events DataFrame is empty. No data to process.")
+        return None
+    
+    # Prepare digi and segment DataFrames
+    df_digis_flat = prepare_digi_data(df_events)
+    df_segments_flat = prepare_segment_data(df_events)
+    
+    # Group and merge digi data
+    df_digis_grouped = group_digi_data(df_digis_flat)
+    
+    # Group and merge segment data
+    df_segments_grouped = group_segment_data(df_segments_flat)
+    
+    # Merge digis and segments into a combined DataFrame
+    df_combined = merge_digi_segment_data(df_digis_grouped, df_segments_grouped)
+    
+    print(f"Combined DataFrame generated with shape: {df_combined.shape}")
+    return df_combined
+
+import random
+
+def print_random_events_with_counts(df_combined, num_events=5, seed=None):
+    """
+    Select and print a specified number of random events that have both digis and segments.
+    
+    For each selected event, prints:
+    - Event Number
+    - Wheel
+    - Sector
+    - Station
+    - Number of Digis
+    - Number of Segments
+    
+    Additionally, returns a list of dictionaries containing the key variables for each event.
+    
+    Parameters:
+    - df_combined (pd.DataFrame): Combined DataFrame containing digis and segments data.
+    - num_events (int): Number of random events to select and print (default is 5).
+    
+    Returns:
+    - List[Dict]: A list where each dictionary contains 'event_number', 'wheel', 'sector', 'station'
+                  for one of the selected events.
+    """
+    # Define segment indicator columns based on the merged DataFrame structure
+    # Adjust these column names if your DataFrame has different segment indicators
+    segment_indicator_columns = ['seg_hasPhi', 'seg_hasZed', 'seg_posLoc_x']
+    
+    # Check which segment indicator columns are present
+    existing_segment_columns = [col for col in segment_indicator_columns if col in df_combined.columns]
+    
+    if not existing_segment_columns:
+        print("No suitable segment indicator columns found in the DataFrame.")
+        return []
+    
+    # Filter events that have both digis and segments
+    eligible_events = df_combined[
+        (df_combined['digi_superLayer'].apply(lambda x: len(x) > 0)) &
+        (df_combined[existing_segment_columns].apply(lambda row: any(len(x) > 0 for x in row), axis=1))
+    ]
+    
+    # Get unique (event_number, wheel, sector, station) combinations
+    unique_combinations = eligible_events[['event_number', 'wheel', 'sector', 'station']].drop_duplicates()
+    
+    available = len(unique_combinations)
+    if available == 0:
+        print("No events found with both digis and segments.")
+        return []
+    
+    # Determine the number of events to select
+    select_count = min(num_events, available)
+    
+    # Randomly select events
+    #add a random seed to make the selection reproducible
+    if seed is None:
+        seed = random
+    else:
+        seed = int(seed)
+    #generate a random seed
+    random.seed(seed)
+    
+    selected_events = unique_combinations.sample(n=select_count, random_state=random.randint(0, 10000))
+    
+    
+    
+    print(f"\nSelected {select_count} Random Event(s) with Both Digis and Segments:\n")
+    
+    # Initialize a list to store selected event details
+    selected_event_info = []
+    
+    for idx, row in selected_events.iterrows():
+        event_number = row['event_number']
+        wheel = row['wheel']
+        sector = row['sector']
+        station = row['station']
+        
+        # Retrieve the corresponding row in df_combined
+        event_row = eligible_events[
+            (eligible_events['event_number'] == event_number) &
+            (eligible_events['wheel'] == wheel) &
+            (eligible_events['sector'] == sector) &
+            (eligible_events['station'] == station)
+        ].iloc[0]
+        
+        # Calculate number of digis and segments
+        num_digis = len(event_row['digi_superLayer'])
+        num_segments = len(event_row['seg_hasPhi'])  # Assuming 'seg_hasPhi' indicates segments
+        
+        # Print event details
+        print(f"Event Number: {event_number}")
+        print(f"Wheel: {wheel}, Sector: {sector}, Station: {station}")
+        print(f"Number of Digis: {num_digis}")
+        print(f"Number of Segments: {num_segments}")
+        print("-" * 50)
+        
+        # Append the event variables to the list
+        selected_event_info.append({
+            'event_number': event_number,
+            'wheel': wheel,
+            'sector': sector,
+            'station': station
+        })
+    
+    return selected_event_info

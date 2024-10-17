@@ -2,6 +2,9 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.gridspec import GridSpec
+from particle_objects.Digis import *
+import logging
 
 # Define Wire class
 class Wire:
@@ -97,6 +100,22 @@ class Layer:
             return self.local_pos[axis_index]
         else:
             return self.global_pos[axis_index]
+        
+    def get_wire_x_position(self, wire_number):
+        """
+        Get the X position of a specific wire in this layer.
+
+        Parameters:
+        - wire_number (int): The wire number (1-based index).
+
+        Returns:
+        - float: X position of the wire.
+        """
+        if 1 <= wire_number <= self.wires.num_wires:
+            return self.wires.positions[wire_number - 1]
+        else:
+            raise ValueError(f"Invalid wire number {wire_number} for Layer {self.layerNumber}")
+
 
 
 class SuperLayer:
@@ -156,6 +175,21 @@ class SuperLayer:
             return self.local_pos[axis_index]
         else:
             return self.global_pos[axis_index]
+
+    def get_layer(self, layer_number):
+        """
+        Retrieve a Layer object by its number.
+
+        Parameters:
+        - layer_number (int): The layer number within the SuperLayer.
+
+        Returns:
+        - Layer: The corresponding Layer object.
+        """
+        for layer in self.layers:
+            if layer.layerNumber == layer_number:
+                return layer
+        raise ValueError(f"Layer number {layer_number} not found in SuperLayer {self.superLayerNumber}")
 
 
 
@@ -908,6 +942,400 @@ def get_rawId(wheel, station, sector):
     )
 
     return rawId
+
+
+import pandas as pd
+import xml.etree.ElementTree as ET
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+# Assuming the Chamber, SuperLayer, Layer, and Wire classes are defined as in your script
+
+# Existing functions (parse_dtgeometry_xml, get_rawId, etc.) remain unchanged
+
+def plot_chamber_with_hits(chamber, df_digis, df_segments, event_info=None, save_path=None):
+    """
+    Plot the Chamber geometry along with digis and segments for a specific event.
+
+    Parameters:
+    - chamber (Chamber): The Chamber object to plot.
+    - df_digis (pd.DataFrame): DataFrame containing digis for the event.
+    - df_segments (pd.DataFrame): DataFrame containing segments for the event.
+    - event_info (dict): Optional dictionary with event details (e.g., event_number).
+    """
+    # Define color mapping for SuperLayers
+    superlayer_colors = {1: 'red', 3: 'blue'}  # SL1: Red, SL3: Blue
+
+    # Define colors for different superlayers for better visualization
+    colors = ['skyblue', 'lightgreen', 'salmon', 'violet', 'orange', 'yellow']
+    # Define a color palette for segments
+    segment_color_palette = plt.cm.get_cmap('tab10')  # You can choose any other colormap
+    max_segments = 10  # Maximum number of segments to handle distinct colors
+
+    width_ch = chamber.bounds_width
+
+    # Create a figure with GridSpec to allocate space for plot and info panels
+    fig = plt.figure(figsize=(18, 8))
+    gs = GridSpec(1, 3, width_ratios=[6, 2, 2], wspace=0.3)
+
+    # Main plot for chamber, digis, and segments
+    ax_plot = fig.add_subplot(gs[0, 0])
+
+    # Info panel for Digis
+    ax_info_digis = fig.add_subplot(gs[0, 1])
+    ax_info_digis.axis('off')  # Hide the axes for the info panel
+
+    # Info panel for Segments
+    ax_info_segments = fig.add_subplot(gs[0, 2])
+    ax_info_segments.axis('off')  # Hide the axes for the info panel
+
+    # Plot Chamber Geometry
+    for sl_index, superlayer in enumerate(chamber.superlayers):
+        color = colors[sl_index % len(colors)]  # Cycle through colors if more superlayers
+
+        if superlayer.superLayerNumber == 2:
+            # SL2 is the theta layer; draw 4 large rectangles representing layers
+            for layer_index, layer in enumerate(superlayer.layers):
+                wire_x = layer.wires.positions[0]  # Get the first wire position
+                # Draw each wire as a rectangle
+                rect = patches.Rectangle(
+                    (wire_x - layer.wires.wire_width / 2, layer.get_dimension('local','z') - layer.wires.wire_height / 2),  # Center the rectangle
+                    layer.bounds_length,
+                    layer.wires.wire_height,
+                    linewidth=0.5,
+                    edgecolor='black',
+                    facecolor=color,
+                    alpha=0.2  # 20% transparency
+                )
+                ax_plot.add_patch(rect)
+
+                # Label the theta layer
+                ax_plot.text(
+                    wire_x,  # Position label at wire_x
+                    layer.get_dimension('local','z'),
+                    f'Theta La{layer_index+1}',
+                    horizontalalignment='center',
+                    verticalalignment='center',
+                    fontsize=9,
+                    color='black',
+                    bbox=dict(facecolor='white', alpha=0.5, edgecolor='none', pad=1)
+                )
+        else:
+            # For other SuperLayers, plot individual wires as rectangles
+            for layer_index, layer in enumerate(superlayer.layers):
+                for wire_x in layer.wires.positions:
+                    # Draw each wire as a rectangle
+                    rect = patches.Rectangle(
+                        (wire_x - layer.wires.wire_width / 2, layer.get_dimension('local','z') - layer.wires.wire_height / 2),  # Center the rectangle
+                        layer.wires.wire_width,
+                        layer.wires.wire_height,
+                        linewidth=0.5,
+                        edgecolor='black',
+                        facecolor=color,
+                        alpha=0.7  # 70% transparency
+                    )
+                    ax_plot.add_patch(rect)
+
+                # Label the layer
+                ax_plot.text(
+                    0,  # X position for label (centered)
+                    layer.get_dimension('local','z'),
+                    f'SL{superlayer.superLayerNumber}-La{layer_index+1}',
+                    horizontalalignment='center',
+                    verticalalignment='center',
+                    fontsize=8,
+                    color='black',
+                    bbox=dict(facecolor='white', alpha=0.5, edgecolor='none', pad=1)
+                )
+
+    # Plot Digis: Only SL1 and SL3
+    # Plot Digis: Only SL1 and SL3
+    if not df_digis.empty:
+        df_digis_filtered = df_digis[df_digis['superLayer'].isin([1, 3])]
+        logging.info(f"Number of Digis after filtering (SL1 & SL3): {len(df_digis_filtered)}")
+        logging.info(df_digis_filtered.head())
+        
+        if df_digis_filtered.empty:
+            logging.warning("No digis found in SL1 or SL3 for this event.")
+        else:
+            # Compute position ranges for debugging
+            # Initialize lists to store converted positions
+            converted_x = []
+            converted_z = []
+            
+            for idx, digi in df_digis_filtered.iterrows():
+                try:
+                    superLayer = int(digi['superLayer'])
+                    layer_num = int(digi['layer'])
+                    wire_num = int(digi['wire'])
+                    time = digi['time']
+
+                    # Retrieve the corresponding SuperLayer object
+                    superlayer_obj = next((sl for sl in chamber.superlayers if sl.superLayerNumber == superLayer), None)
+                    if not superlayer_obj:
+                        logging.error(f"SuperLayer {superLayer} not found in Chamber {chamber.rawId}.")
+                        continue
+
+                    # Retrieve the corresponding Layer object
+                    layer_obj = superlayer_obj.get_layer(layer_num)
+                    if not layer_obj:
+                        logging.error(f"Layer {layer_num} not found in SuperLayer {superLayer}.")
+                        continue
+
+                    # Get the actual X position of the wire
+                    x_pos = layer_obj.get_wire_x_position(wire_num)
+
+                    # Get the Z position of the layer
+                    z_pos = layer_obj.get_dimension('local', 'z')
+
+                    converted_x.append(x_pos)
+                    converted_z.append(z_pos)
+
+                    color = superlayer_colors.get(superLayer, 'gray')  # Default to gray if SL not found
+                    ax_plot.plot(x_pos, z_pos, 'o', markersize=5, color=color, label=f'SL{superLayer}' if idx == 0 else "")
+                
+                except Exception as e:
+                    logging.error(f"Error plotting digi {idx}: {e}")
+            
+            # For debugging, log the range of converted positions
+            if converted_x and converted_z:
+                logging.info(f"Converted Digi X positions range: {min(converted_x)} to {max(converted_x)}")
+                logging.info(f"Converted Digi Z positions range: {min(converted_z)} to {max(converted_z)}")
+    else:
+        logging.info("No Digis to plot.")
+
+    # Plot Segments
+    if not df_segments.empty:
+        num_segments = len(df_segments)
+        logging.info(f"Number of Segments to plot: {num_segments}")
+
+        # Determine colors based on the number of segments
+        if num_segments <= max_segments:
+            segment_colors = [segment_color_palette(i) for i in range(num_segments)]
+        else:
+            # If more segments than the palette, repeat colors
+            segment_colors = [segment_color_palette(i % max_segments) for i in range(num_segments)]
+            
+        for idx, segment in df_segments.iterrows():
+            try:
+                # Assuming segment positions are in local coordinates
+                pos_x = segment['posLoc_x']
+                pos_z = segment['posLoc_z']
+                dir_x = segment['dirLoc_x']
+                dir_z = segment['dirLoc_z']
+
+               # Assign color based on segment index
+                if num_segments == 1:
+                    color = 'green'  # Default color for single segment
+                else:
+                    color = segment_colors[idx]
+
+                # Plot the segment as an arrow
+                ax_plot.arrow(
+                    pos_x, pos_z,
+                    dir_x * 20, dir_z * 20,  # Scale direction vectors for visibility
+                    head_width=2,
+                    head_length=2,
+                    fc=color,
+                    ec=color,
+                    label=f'Segment {idx + 1}' if idx == 0 else ""  # Label only the first segment to avoid duplicates
+                )
+            except Exception as e:
+                logging.error(f"Error plotting segment {idx}: {e}")
+        
+        # Plot posLoc_x_SL1 and posLoc_x_SL3 outside the loop
+        if 'posLoc_x_SL1' in df_segments.columns and 'posLoc_x_SL3' in df_segments.columns:
+            ax_plot.scatter(df_segments['posLoc_x_SL1'], df_segments['posLoc_z'], 
+                           c='orange', marker='x', label='POINT SL1', alpha=0.7)
+            ax_plot.scatter(df_segments['posLoc_x_SL3'], df_segments['posLoc_z'], 
+                           c='purple', marker='x', label='POINT SL3', alpha=0.7)
+        else:
+            logging.warning("posLoc_x_SL1 or posLoc_x_SL3 columns are missing in segments DataFrame.")
+    else:
+        logging.info("No Segments to plot.")
+
+    # Setting plot limits based on the maximum wire positions and Chamber bounds
+    ax_plot.set_xlim(-width_ch / 2, width_ch / 2)
+    
+    # Determine Z limits based on layers' positions and SL2 bounds
+    all_z = []
+    for sl in chamber.superlayers:
+        if sl.superLayerNumber != 2:
+            for layer in sl.layers:
+                z = layer.get_dimension('local', 'z')
+                all_z.append(z)
+        else:
+            # Assuming SL2 has multiple layers; adjust as needed
+            for layer in sl.layers:
+                z = layer.get_dimension('local', 'z')
+                all_z.append(z)
+    
+    if all_z:
+        min_z = min(all_z) - 10
+        max_z = max(all_z) + 10
+        ax_plot.set_ylim(min_z, max_z)
+    else:
+        # Default limits if no z positions are available
+        ax_plot.set_ylim(-50, 50)
+
+    ax_plot.set_xlabel('X Position')
+    ax_plot.set_ylabel('Z Position')
+    title = f'2D Visualization of Chamber {chamber.rawId} with SuperLayers, Layers, and Wires'
+    if event_info:
+        title += f" | Event {event_info.get('event_number', '')}"
+    ax_plot.set_title(title)
+    ax_plot.grid(True)
+    
+    # --- Preparing Information for the Info Panels ---
+
+    # 1. Digis Information: Number of activated wires per SL1 and SL3
+    if not df_digis.empty:
+        df_digis_sl = df_digis[df_digis['superLayer'].isin([1, 3])]
+        digis_summary = df_digis_sl.groupby(['superLayer', 'layer']).agg({
+            'wire': 'nunique'  # Number of unique wires per layer
+        }).rename(columns={'wire': 'Wires', 'layer' : 'L', 'superLayer':'sl'}).reset_index()
+        digis_summary = digis_summary.rename(columns={'layer' : 'l'})
+        digis_summary = digis_summary.rename(columns={'superLayer' : 'SL'})
+    else:
+        digis_summary = pd.DataFrame(columns=['superLayer', 'layer', 'Activated Wires'])
+
+    # 2. Segments Information: Number of posLoc_x_SL1 and posLoc_x_SL3 points
+    if not df_segments.empty:
+        segments_summary = df_segments.copy()
+        segments_summary['Segment ID'] = range(1, len(segments_summary) + 1)
+        segments_summary = segments_summary[['Segment ID', 'phi_nHits']]
+        segments_summary = segments_summary.rename(columns={'phi_nHits': 'Phi Hits'})
+    else:
+        segments_summary = pd.DataFrame(columns=['Segment ID', 'Phi Hits'])
+    
+    # --- Displaying Information in the Info Panels ---
+
+    # Set title for Digis info panel
+    ax_info_digis.set_title('Digis Summary', fontsize=12, fontweight='bold')
+
+    if not digis_summary.empty:
+        # Create a table for Digis Summary
+        table_digis = ax_info_digis.table(cellText=digis_summary.values,
+                                         colLabels=digis_summary.columns,
+                                         cellLoc='center',
+                                         loc='upper center',
+                                         bbox=[0.0, -0.1, 1, 0.8])  # [left, bottom, width, height]
+        table_digis.auto_set_font_size(False)
+        table_digis.set_fontsize(10)
+        table_digis.scale(1, 1.5)
+    else:
+        ax_info_digis.text(0.5, 0.5, 'No Digis', ha='center', va='center', fontsize=10)
+
+    # Set title for Segments info panel
+    ax_info_segments.set_title('Segments Summary', fontsize=12, fontweight='bold')
+
+    if not segments_summary.empty:
+        # Create a table for Segments Summary
+        table_segments = ax_info_segments.table(cellText=segments_summary.values,
+                                               colLabels=segments_summary.columns,
+                                               cellLoc='center',
+                                               loc='upper center',
+                                               bbox=[0.0, -0.1, 1, 0.8])  # [left, bottom, width, height]
+        table_segments.auto_set_font_size(False)
+        table_segments.set_fontsize(10)
+        table_segments.scale(1, 1.5)
+    else:
+        ax_info_segments.text(0.5, 0.5, 'No Segments', ha='center', va='center', fontsize=10)
+
+    # Handle legends to avoid duplicate labels
+    handles, labels = ax_plot.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax_plot.legend(by_label.values(), by_label.keys())
+
+    # Show the plot
+    plt.show()
+
+    # Optionally, save the plot if save_path is provided
+    if save_path:
+        fig.savefig(save_path, bbox_inches='tight')
+        logging.info(f"Plot saved to {save_path}")
+    else:
+        plt.show()
+    
+def plot_specific_event(wheel, sector, station, event_number, df_combined, df_geometry):
+    """
+    Plot the Chamber geometry along with digis and segments for a specific event.
+    
+    Additionally, returns the filtered digis and segments DataFrames for further processing.
+
+    Parameters:
+    - wheel (int): Wheel number (-2 to 2)
+    - sector (int): Sector number (0 to 14)
+    - station (int): Station number (1 to 4)
+    - event_number (int): The event number to plot
+    - df_combined (pd.DataFrame): Combined DataFrame containing digis and segments data
+    - df_geometry (pd.DataFrame): DataFrame containing chamber geometry data
+
+    Returns:
+    - tuple: (df_event_digis, df_event_segments)
+        - df_event_digis (pd.DataFrame): Filtered DataFrame containing digis for the event
+        - df_event_segments (pd.DataFrame): Filtered DataFrame containing segments for the event
+    """
+    logging.info(f"\n--- Plotting Event {event_number} for Wheel {wheel}, Sector {sector}, Station {station} ---")
+    
+    # Step 2: Compute rawId
+    try:
+        rawId = get_rawId(wheel=wheel, station=station, sector=sector)
+        logging.info(f"Computed rawId: {rawId}")
+    except ValueError as ve:
+        logging.error(f"Error computing rawId: {ve}")
+        return None, None
+    
+    # Step 3: Filter DataFrame for the specific chamber
+    logging.info(f"\nFiltering geometry data for rawId {rawId}...")
+    chamber_df = get_chamber_data(df_geometry, rawId)
+    if chamber_df is None or chamber_df.empty:
+        logging.error(f"No chamber data found for rawId {rawId}.")
+        return None, None
+    
+    # Step 4: Create Chamber object
+    logging.info("Creating Chamber object...")
+    try:
+        chamber = create_chamber_object(chamber_df)
+        logging.info(chamber)
+    except ValueError as ve:
+        logging.error(f"Error creating Chamber object: {ve}")
+        return None, None
+    
+    # Step 11: Extract digis and segments for the specific event, wheel, sector, station
+    logging.info(f"\nFiltering data for Event {event_number}, Wheel {wheel}, Sector {sector}, Station {station}...")
+    df_event_digis = get_digis_for_event(df_combined, event_number, wheel, sector, station)
+    df_event_segments = get_segments_for_event(df_combined, event_number, wheel, sector, station)
+    
+    if df_event_digis.empty and df_event_segments.empty:
+        logging.info("No digis or segments found for the specified criteria.")
+        return df_event_digis, df_event_segments  # Returning empty DataFrames
+    
+    # Step 12: Print digis and segments to console
+    print("\n--- Digis Information ---")
+    if not df_event_digis.empty:
+        print(df_event_digis.to_string(index=False))
+    else:
+        print("No Digis found for this event and chamber.")
+    
+    print("\n--- Segments Information ---")
+    if not df_event_segments.empty:
+        print(df_event_segments.to_string(index=False))
+    else:
+        print("No Segments found for this event and chamber.")
+    
+    # Step 13: Plot the chamber with hits and segments
+    logging.info("\nPlotting the chamber with digis and segments...")
+    event_info = {
+        'event_number': event_number
+    }
+    plot_chamber_with_hits(chamber, df_event_digis, df_event_segments, event_info=event_info)
+    logging.info("\nPlotting completed.")
+    
+    # Step 14: Return the filtered DataFrames
+    return df_event_digis, df_event_segments
+
+
 
 
 

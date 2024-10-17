@@ -12,6 +12,7 @@ Generic test to handle the data extraction and processing steps
 from geometry.CMSDT import CMSDT
 from particle_objects.Muon import *
 from plotter.plotter import Plotter
+from plotter.dtPlotter import *
 from plotter.cmsDraw import *
 from particle_objects.Digis import *
 import matplotlib.pyplot as plt
@@ -129,15 +130,34 @@ def main():
     
     #Plot the digis and segments
     
-    drawCoordinates_test()
+    #drawCoordinates_test()
     
-    MB = CMSDT(wheel, sector, station)  # Replace with actual initialization if necessary    
+    try:
+        rawId = get_rawId(wheel, station, sector)
+    except ValueError as ve:
+        print(f"Error: {ve}")
+        return
+
+    print(f"Computed rawId: {rawId}")
+
+    # Retrieve Chamber data
+    chamber_df = get_chamber_data(df, rawId)
+    if chamber_df is None:
+        return
+
+    # Create Chamber object from DataFrame
+    chamber = create_chamber_object(chamber_df)
+    print(f"Chamber {rawId} object has been created.")
+    
+    plot_chamber_with_hits(wheel, sector, 2, df_digis, df_segments)
+    
+    """ MB = CMSDT(wheel, sector, station)  # Replace with actual initialization if necessary    
     #draw_cms_muon_chambers(-1*wheel, sector, station)
     p = Plotter(MB)
     p.plot_digis(df_digis)
     p.plot_segments(df_segments)
     plt.show()
-    p.save_canvas("prueba")
+    p.save_canvas("prueba") """
 
 
 if __name__ == "__main__":
