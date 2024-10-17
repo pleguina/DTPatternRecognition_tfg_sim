@@ -47,10 +47,12 @@ def main():
             sector = event['sector']
             station = event['station']
     
-            plot_specific_event(wheel=wheel, sector=sector, station=station, event_number=event_number,
+            event_digis, event_segments = plot_specific_event(wheel=wheel, sector=sector, station=station, event_number=event_number,
                                 df_combined=df_combined, df_geometry=df_geometry)
             
             plt.show()
+            
+            #Now process the event digis and segments as needed
     
 
 if __name__ == "__main__":
