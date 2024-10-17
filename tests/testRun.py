@@ -114,7 +114,7 @@ def main():
     else:
         print("\nNo station with digis found.")
         
-    #process_digis_by_station_combined_dummy(df_combined, event_number, wheel, sector)
+    process_digis_by_station_combined_dummy(df_combined, event_number, wheel, sector)
     
     #Get digis and segments for the event
     
@@ -125,9 +125,11 @@ def main():
 
     #Plot the station
     
-    draw_cms_muon_chambers(wheel, sector, 2)
+    #draw_cms_muon_chambers(wheel, sector, 2)
     
     #Plot the digis and segments
+    
+    drawCoordinates_test()
     
     MB = CMSDT(wheel, sector, station)  # Replace with actual initialization if necessary    
     #draw_cms_muon_chambers(-1*wheel, sector, station)
