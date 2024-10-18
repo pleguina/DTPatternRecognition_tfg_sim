@@ -5,9 +5,7 @@ import os
 # This allows the test to access the modules in the base directory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from newGeo.dtGeometry import *
-from newGeo.Digis import *
-from newGeo.nn_basic_lib import *  # Basic library for the neural network design.
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -18,6 +16,11 @@ import torch.nn as nn
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
+
+from newGeo.dtGeometry import *
+from newGeo.Digis import *
+from newGeo.nn_basic_lib import *  # Basic library for the neural network design.
+from plotter.cmsDraw import *
 
 """ Overview
 
@@ -71,6 +74,32 @@ if df_combined is None or df_combined.empty:
 # The segments of a chamber are the result of the digis of that chamber. The number of segments is the target variable that we want to predict.
 # So basically, we have a database with all the digis and segments of all the events. Each of these chambers receives digis and produces segments.
 # The algorithm has to be able to predict the number of segments that will be produced in a specific chamber, for its specific digis.
+
+# **************************************************************************************************************************************************************************************
+# Plot some random events with digis and segments
+# **************************************************************************************************************************************************************************************
+
+#Then we print random events with digis and segments to have examples to work with
+# You can add a random seed to the function to get the same events every time (third argument)
+selected_events = print_random_events_with_counts(df_combined, 1, 6)
+
+#Finally we plot a specific event with the plot_specific_event function
+
+for event in selected_events:
+        event_number = event['event_number']
+        wheel = event['wheel']
+        sector = event['sector']
+        station = event['station']
+
+        plot_specific_event(wheel=wheel, sector=sector, station=station, event_number=event_number,
+                            df_combined=df_combined, df_geometry=df_geometry)
+        
+        plt.show()
+
+# Also you can print the muon chamber and sector being processed
+print(f"Processing Wheel: {wheel}, Station: {station}, Sector: {sector}")
+
+draw_cms_muon_chambers(wheel, sector, station)
 
 # **************************************************************************************************************************************************************************************
 # Feature Extraction
@@ -574,5 +603,7 @@ plt.show()
 #Now you can try to add more features to the model, tune hyperparameters, or experiment with different architectures to improve the model's performance.
 #You can modify the target varibale. For the moment, we are predicting the number of segments produced by a chamber. You can try to match the segments to the digis and predict the exact segments produced by a specific number of digis.
 #For example, if 12 digis in one station produce 3 segments, which digis are responsible for the segments? This can be a more complex problem to solve.
+
+# To load more data, check load_multiple_root_files() function in digis.py
 
 # End of simple_NN_test.py
