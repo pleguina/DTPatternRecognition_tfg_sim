@@ -23,6 +23,41 @@ def load_root_file(root_file_path, tree_name):
         print(f"\nThe ROOT file '{root_file_path}' was not found.")
         return None
 
+def load_multiple_root_files(root_folder_path, tree_name):
+    """
+    Load and concatenate data from multiple ROOT files in a folder.
+
+    Parameters:
+    - root_folder_path (str): Path to the folder containing the ROOT files.
+    - tree_name (str): Name of the tree in each ROOT file to extract.
+
+    Returns:
+    - pd.DataFrame: Concatenated DataFrame containing data from all ROOT files.
+    """
+    all_dfs = []
+    
+    # Iterate over all files in the folder
+    for root_file in os.listdir(root_folder_path):
+        if root_file.endswith(".root"):  # Only process ROOT files
+            root_file_path = os.path.join(root_folder_path, root_file)
+            print(f"\nProcessing ROOT file: {root_file_path}")
+            
+            # Generate DataFrame from the current ROOT file
+            df_combined = generate_combined_dataframe(root_file_path, tree_name)
+            
+            if df_combined is not None:
+                all_dfs.append(df_combined)  # Append the DataFrame to the list
+    
+    if not all_dfs:
+        print("No valid ROOT files were found or processed.")
+        return None
+    
+    # Concatenate all the DataFrames
+    final_df_combined = pd.concat(all_dfs, ignore_index=True)
+    print(f"\nSuccessfully concatenated {len(all_dfs)} ROOT files into a single DataFrame.")
+    
+    return final_df_combined
+
 def extract_data(tree, branches_to_extract):
     print("\nLoading branches from the ROOT file...")
     try:
