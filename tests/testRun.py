@@ -12,9 +12,9 @@ Generic test to handle the data extraction and processing steps
 from geometry.CMSDT import CMSDT
 from particle_objects.Muon import *
 from plotter.plotter import Plotter
-from plotter.dtPlotter import *
+from newGeo.dtGeometry import *
 from plotter.cmsDraw import *
-from particle_objects.Digis import *
+from newGeo.Digis import *
 import matplotlib.pyplot as plt
 import numpy as np
 

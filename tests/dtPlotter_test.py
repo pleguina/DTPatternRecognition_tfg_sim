@@ -1,4 +1,4 @@
-from dtPlotter import *
+from newGeo.dtGeometry import *
 
 import sys
 import os

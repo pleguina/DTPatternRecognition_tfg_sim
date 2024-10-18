@@ -1,3 +1,7 @@
+#Digis.py
+
+# This library contains functions to process digis and segments data from ROOT files.
+
 import pandas as pd
 import uproot
 import random

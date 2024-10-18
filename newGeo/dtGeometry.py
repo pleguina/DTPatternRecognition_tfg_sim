@@ -1,230 +1,16 @@
+#dtGeometry.py
+
+#This script contains the functions to parse the DT geometry XML file and create Chamber, SuperLayer, Layer, and Wire objects.
+
 import pandas as pd
 import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.gridspec import GridSpec
-from particle_objects.Digis import *
+from newGeo.Digis import *
+from newGeo.driftTubes import *
+import numpy as np
 import logging
-
-# Define Wire class
-class Wire:
-    def __init__(self, first_pos, last_pos, num_wires, layer_y, wire_width=4.2, wire_height=1.3):
-        self.first_pos = first_pos
-        self.last_pos = last_pos
-        self.num_wires = num_wires
-        self.layer_y = layer_y  # Y position based on local Z
-        self.wire_width = wire_width
-        self.wire_height = wire_height
-        self.positions = self.calculate_wire_positions()
-
-    def calculate_wire_positions(self):
-        # Evenly space wires between first_pos and last_pos
-        if self.num_wires == 1:
-            return [self.first_pos]
-        spacing = (self.last_pos - self.first_pos) / (self.num_wires - 1)
-        return [
-            self.first_pos + i * spacing
-            for i in range(self.num_wires)
-        ]
-
-class Layer:
-    def __init__(self, rawId, layerNumber, cellWidth, cellHeight, cellLength,
-                 channels_first, channels_last, channels_total,
-                 wireFirst, wireLast, global_pos, local_pos,
-                 norm_vect, bounds_width, bounds_thickness, bounds_length):
-        """
-        Initialize a Layer object.
-
-        Parameters:
-        - rawId (int): Raw ID of the layer.
-        - layerNumber (int): Layer number within the SuperLayer.
-        - cellWidth (float): Width of each cell in the layer.
-        - cellHeight (float): Height of each cell in the layer.
-        - cellLength (float): Length of each cell in the layer.
-        - channels_first (int): First channel number.
-        - channels_last (int): Last channel number.
-        - channels_total (int): Total number of channels.
-        - wireFirst (float): Position of the first wire.
-        - wireLast (float): Position of the last wire.
-        - global_pos (tuple of float): Global (x, y, z) position.
-        - local_pos (tuple of float): Local (x, y, z) position.
-        - norm_vect (tuple of float): Normal vector (x, y, z).
-        - bounds_width (float): Width from bounds.
-        - bounds_thickness (float): Thickness from bounds.
-        - bounds_length (float): Length from bounds.
-        """
-        self.rawId = rawId
-        self.layerNumber = layerNumber
-        self.cellWidth = cellWidth
-        self.cellHeight = cellHeight
-        self.cellLength = cellLength
-        self.channels_first = channels_first
-        self.channels_last = channels_last
-        self.channels_total = channels_total
-        self.wireFirst = wireFirst
-        self.wireLast = wireLast
-        self.global_pos = global_pos
-        self.local_pos = local_pos
-        self.norm_vect = norm_vect
-        self.bounds_width = bounds_width
-        self.bounds_thickness = bounds_thickness
-        self.bounds_length = bounds_length
-        self.wires = Wire(wireFirst, wireLast, channels_total, local_pos[2])
-
-    def __repr__(self):
-        return (f"Layer(rawId={self.rawId}, layerNumber={self.layerNumber}, "
-                f"cellWidth={self.cellWidth}, cellHeight={self.cellHeight}, "
-                f"cellLength={self.cellLength}, channels_total={self.channels_total})")
-        
-    def get_dimension(self, position_type='local', axis='x'):
-        """
-        Retrieve a specific coordinate from the local or global position.
-
-        Parameters:
-        - position_type (str): 'local' or 'global' to specify which position to use.
-        - axis (str): 'x', 'y', or 'z' to specify which coordinate to retrieve.
-
-        Returns:
-        - float: The requested coordinate value.
-
-        Raises:
-        - ValueError: If position_type or axis is invalid.
-        """
-        if position_type not in ['local', 'global']:
-            raise ValueError("position_type must be 'local' or 'global'.")
-        if axis not in ['x', 'y', 'z']:
-            raise ValueError("axis must be 'x', 'y', or 'z'.")
-
-        axis_index = {'x': 0, 'y': 1, 'z': 2}[axis]
-        if position_type == 'local':
-            return self.local_pos[axis_index]
-        else:
-            return self.global_pos[axis_index]
-        
-    def get_wire_x_position(self, wire_number):
-        """
-        Get the X position of a specific wire in this layer.
-
-        Parameters:
-        - wire_number (int): The wire number (1-based index).
-
-        Returns:
-        - float: X position of the wire.
-        """
-        if 1 <= wire_number <= self.wires.num_wires:
-            return self.wires.positions[wire_number - 1]
-        else:
-            raise ValueError(f"Invalid wire number {wire_number} for Layer {self.layerNumber}")
-
-
-
-class SuperLayer:
-    def __init__(self, rawId, superLayerNumber, global_pos, local_pos,
-                 norm_vect, bounds_width, bounds_thickness, bounds_length,
-                 layers):
-        """
-        Initialize a SuperLayer object.
-
-        Parameters:
-        - rawId (int): Raw ID of the SuperLayer.
-        - superLayerNumber (int): SuperLayer number within the Chamber.
-        - global_pos (tuple of float): Global (x, y, z) position.
-        - local_pos (tuple of float): Local (x, y, z) position.
-        - norm_vect (tuple of float): Normal vector (x, y, z).
-        - bounds_width (float): Width from bounds.
-        - bounds_thickness (float): Thickness from bounds.
-        - bounds_length (float): Length from bounds.
-        - layers (list of Layer): List of Layer objects within the SuperLayer.
-        """
-        self.rawId = rawId
-        self.superLayerNumber = superLayerNumber
-        self.global_pos = global_pos
-        self.local_pos = local_pos
-        self.norm_vect = norm_vect
-        self.bounds_width = bounds_width
-        self.bounds_thickness = bounds_thickness
-        self.bounds_length = bounds_length
-        self.layers = layers  # List of Layer objects
-
-    def __repr__(self):
-        return (f"SuperLayer(rawId={self.rawId}, superLayerNumber={self.superLayerNumber}, "
-                f"bounds_width={self.bounds_width}, bounds_length={self.bounds_length}, "
-                f"layers={len(self.layers)})")
-        
-    def get_dimension(self, position_type='local', axis='x'):
-        """
-        Retrieve a specific coordinate from the local or global position.
-
-        Parameters:
-        - position_type (str): 'local' or 'global' to specify which position to use.
-        - axis (str): 'x', 'y', or 'z' to specify which coordinate to retrieve.
-
-        Returns:
-        - float: The requested coordinate value.
-
-        Raises:
-        - ValueError: If position_type or axis is invalid.
-        """
-        if position_type not in ['local', 'global']:
-            raise ValueError("position_type must be 'local' or 'global'.")
-        if axis not in ['x', 'y', 'z']:
-            raise ValueError("axis must be 'x', 'y', or 'z'.")
-
-        axis_index = {'x': 0, 'y': 1, 'z': 2}[axis]
-        if position_type == 'local':
-            return self.local_pos[axis_index]
-        else:
-            return self.global_pos[axis_index]
-
-    def get_layer(self, layer_number):
-        """
-        Retrieve a Layer object by its number.
-
-        Parameters:
-        - layer_number (int): The layer number within the SuperLayer.
-
-        Returns:
-        - Layer: The corresponding Layer object.
-        """
-        for layer in self.layers:
-            if layer.layerNumber == layer_number:
-                return layer
-        raise ValueError(f"Layer number {layer_number} not found in SuperLayer {self.superLayerNumber}")
-
-
-
-class Chamber:
-    def __init__(self, rawId, chamberId, global_pos, local_pos,
-                 norm_vect, bounds_width, bounds_thickness, bounds_length,
-                 superlayers):
-        """
-        Initialize a Chamber object.
-
-        Parameters:
-        - rawId (int): Raw ID of the Chamber.
-        - chamberId (str or int): Chamber identifier.
-        - global_pos (tuple of float): Global (x, y, z) position.
-        - local_pos (tuple of float): Local (x, y, z) position.
-        - norm_vect (tuple of float): Normal vector (x, y, z).
-        - bounds_width (float): Width from bounds.
-        - bounds_thickness (float): Thickness from bounds.
-        - bounds_length (float): Length from bounds.
-        - superlayers (list of SuperLayer): List of SuperLayer objects within the Chamber.
-        """
-        self.rawId = rawId
-        self.chamberId = chamberId
-        self.global_pos = global_pos
-        self.local_pos = local_pos
-        self.norm_vect = norm_vect
-        self.bounds_width = bounds_width
-        self.bounds_thickness = bounds_thickness
-        self.bounds_length = bounds_length
-        self.superlayers = superlayers  # List of SuperLayer objects
-
-    def __repr__(self):
-        return (f"Chamber(rawId={self.rawId}, chamberId={self.chamberId}, "
-                f"bounds_width={self.bounds_width}, bounds_length={self.bounds_length}, "
-                f"superlayers={len(self.superlayers)})")
 
 # Function to parse XML and create DataFrame
 def parse_dtgeometry_xml(xml_file):
@@ -1104,6 +890,20 @@ def plot_chamber_with_hits(chamber, df_digis, df_segments, event_info=None, save
     else:
         logging.info("No Digis to plot.")
 
+     # --- Extract Z Positions for SL1 and SL3 ---
+    # These will be used to connect segments if both points are available
+    sl1 = next((sl for sl in chamber.superlayers if sl.superLayerNumber == 1), None)
+    sl3 = next((sl for sl in chamber.superlayers if sl.superLayerNumber == 3), None)
+
+    if sl1 and sl3:
+        z_SL1 = np.mean([layer.get_dimension('local', 'z') for layer in sl1.layers])
+        z_SL3 = np.mean([layer.get_dimension('local', 'z') for layer in sl3.layers])
+        logging.info(f"z_SL1: {z_SL1}, z_SL3: {z_SL3}")
+    else:
+        z_SL1 = 0
+        z_SL3 = 0
+        logging.warning("SL1 or SL3 not found in chamber superlayers.")
+
     # Plot Segments
     if not df_segments.empty:
         num_segments = len(df_segments)
@@ -1118,39 +918,49 @@ def plot_chamber_with_hits(chamber, df_digis, df_segments, event_info=None, save
             
         for idx, segment in df_segments.iterrows():
             try:
-                # Assuming segment positions are in local coordinates
-                pos_x = segment['posLoc_x']
-                pos_z = segment['posLoc_z']
-                dir_x = segment['dirLoc_x']
-                dir_z = segment['dirLoc_z']
-
-               # Assign color based on segment index
-                if num_segments == 1:
-                    color = 'green'  # Default color for single segment
+                # Check if posLoc_x_SL1 and posLoc_x_SL3 are present and not NaN
+                pos_SL1 = segment.get('posLoc_x_SL1', np.nan)
+                pos_SL3 = segment.get('posLoc_x_SL3', np.nan)
+                
+                if pd.notnull(pos_SL1) and pd.notnull(pos_SL3):
+                    # Draw line connecting (pos_SL1, z_SL1) to (pos_SL3, z_SL3)
+                    ax_plot.plot([pos_SL1, pos_SL3], [z_SL1, z_SL3], '-', color=segment_colors[idx], 
+                                 label=f'Segment {idx + 1}')
                 else:
-                    color = segment_colors[idx]
+                    # Existing arrow plotting
+                    pos_x = segment['posLoc_x']
+                    pos_z = segment['posLoc_z']
+                    dir_x = segment['dirLoc_x']
+                    dir_z = segment['dirLoc_z']
 
-                # Plot the segment as an arrow
-                ax_plot.arrow(
-                    pos_x, pos_z,
-                    dir_x * 20, dir_z * 20,  # Scale direction vectors for visibility
-                    head_width=2,
-                    head_length=2,
-                    fc=color,
-                    ec=color,
-                    label=f'Segment {idx + 1}' if idx == 0 else ""  # Label only the first segment to avoid duplicates
-                )
+                    # Assign color based on segment index
+                    if num_segments == 1:
+                        color = 'green'  # Default color for single segment
+                    else:
+                        color = segment_colors[idx]
+
+                    # Plot the segment as an arrow
+                    ax_plot.arrow(
+                        pos_x, pos_z,
+                        dir_x * 20, dir_z * 20,  # Scale direction vectors for visibility
+                        head_width=2,
+                        head_length=2,
+                        fc=color,
+                        ec=color,
+                        label=f'Segment {idx + 1}'  
+                    )
             except Exception as e:
                 logging.error(f"Error plotting segment {idx}: {e}")
         
         # Plot posLoc_x_SL1 and posLoc_x_SL3 outside the loop
-        if 'posLoc_x_SL1' in df_segments.columns and 'posLoc_x_SL3' in df_segments.columns:
-            ax_plot.scatter(df_segments['posLoc_x_SL1'], df_segments['posLoc_z'], 
-                           c='orange', marker='x', label='POINT SL1', alpha=0.7)
-            ax_plot.scatter(df_segments['posLoc_x_SL3'], df_segments['posLoc_z'], 
-                           c='purple', marker='x', label='POINT SL3', alpha=0.7)
-        else:
-            logging.warning("posLoc_x_SL1 or posLoc_x_SL3 columns are missing in segments DataFrame.")
+        # if 'posLoc_x_SL1' in df_segments.columns and 'posLoc_x_SL3' in df_segments.columns:
+        #     ax_plot.scatter(df_segments['posLoc_x_SL1'], df_segments['posLoc_z'], 
+        #                    c='orange', marker='x', label='POINT SL1', alpha=0.7)
+        #     ax_plot.scatter(df_segments['posLoc_x_SL3'], df_segments['posLoc_z'], 
+        #                    c='purple', marker='x', label='POINT SL3', alpha=0.7)
+        # else:
+        #     logging.warning("posLoc_x_SL1 or posLoc_x_SL3 columns are missing in segments DataFrame.")
+        
     else:
         logging.info("No Segments to plot.")
 

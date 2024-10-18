@@ -9,16 +9,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 Generic test to handle the data extraction and processing steps
 '''
 
-from geometry.CMSDT import CMSDT
-from particle_objects.Muon import *
-from plotter.plotter import Plotter
-from plotter.dtPlotter import *
-from plotter.cmsDraw import *
-from particle_objects.Digis import *
+from newGeo.dtGeometry import *
+from newGeo.Digis import *
 import matplotlib.pyplot as plt
 import numpy as np
-
-import uproot
 import pandas as pd
 
 
@@ -37,7 +31,7 @@ def main():
     
     #Then we print random events with digis and segments to have examples to work with
     # You can add a random seed to the function to get the same events every time (third argument)
-    selected_events = print_random_events_with_counts(df_combined, 1, 3)
+    selected_events = print_random_events_with_counts(df_combined, 1, 6)
     
     #Finally we plot a specific event with the plot_specific_event function
     
