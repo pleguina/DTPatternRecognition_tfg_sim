@@ -66,6 +66,7 @@ if df_geometry.empty:
 
 # Generate Combined DataFrame that holds all the digis and segments of all the events
 print("\nGenerating Combined DataFrame...")
+print("test git commit")
 df_combined = generate_combined_dataframe(root_file_path, tree_name)
 if df_combined is None or df_combined.empty:
     logging.error("Combined DataFrame is empty or failed to generate.")
