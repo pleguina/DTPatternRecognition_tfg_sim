@@ -86,21 +86,17 @@ selected_events = print_random_events_with_counts(df_combined, 1, 6)
 
 #Finally we plot a specific event with the plot_specific_event function
 
-for event in selected_events:
-        event_number = event['event_number']
-        wheel = event['wheel']
-        sector = event['sector']
-        station = event['station']
 
-        plot_specific_event(wheel=wheel, sector=sector, station=station, event_number=event_number,
+
+plot_specific_event(wheel=-1, sector=9, station=1, event_number=52249,
                             df_combined=df_combined, df_geometry=df_geometry)
         
-        plt.show()
+       
 
 # Also you can print the muon chamber and sector being processed
-print(f"Processing Wheel: {wheel}, Station: {station}, Sector: {sector}")
+print(f"Processing Wheel: {-1}, Station: {1}, Sector: {9}")
 
-draw_cms_muon_chambers(wheel, sector, station)
+draw_cms_muon_chambers(-2, 1, 1)
 
 # **************************************************************************************************************************************************************************************
 # Feature Extraction
