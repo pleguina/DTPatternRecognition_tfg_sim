@@ -17,6 +17,7 @@ channels:
 dependencies:
   - python=3.11
   - root  # Incluye PyROOT para trabajar con archivos ROOT
+  - uproot  # Lectura de archivos ROOT
   - numpy  # Última versión estable
   - pandas
   - matplotlib
