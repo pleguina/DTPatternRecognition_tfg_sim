@@ -1,0 +1,41 @@
+#1) Install miniconda
+#2) Create a new environment with the following command: conda env create -f environment.yml
+#3) Activate the environment with the following command: conda activate jupyter_ml_env
+
+#) If you want to update/upgrade individual packages, you can do it with the following command: conda update package_name
+#) If you want to install a new package, you can do it with the following command: conda install package_name
+#) If the package is part of the pip packages, you can do it with the following command: pip install package_name
+
+
+#) To register the environment in Jupyter, you can do it with the following command: python -m ipykernel install --user --name=jupyter_ml_env --display-name="Python 3.11 (jupyter_ml_env)"
+#) To be available from vscode, you just need to restart the editor and select the new environment in the .ipynb file in the top right corner.
+
+name: jupyter_ml_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - root  # Incluye PyROOT para trabajar con archivos ROOT
+  - uproot  # Lectura de archivos ROOT
+  - numpy  # Última versión estable
+  - pandas
+  - matplotlib
+  - scikit-learn
+  - scipy
+  - seaborn
+  - pyarrow
+  - jupyterlab  # Interfaz moderna para Jupyter
+  - notebook  # Jupyter Notebook clásico
+  - ipykernel  # Kernel de IPython para usar este entorno en Jupyter
+  - pytorch  # PyTorch (CPU por defecto, puedes ajustar para GPU)
+  - torchvision  # Complemento para visión por computadora
+  - torchaudio  # Complemento para procesamiento de audio
+  - pip
+  - pip:
+      - torch-geometric  # Librería principal de Torch Geometric
+      - torch-scatter -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
+      - torch-sparse -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
+      - torch-cluster -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
+      - torch-spline-conv -f https://data.pyg.org/whl/torch-2.0.0+cpu.html
+      - scikit-optimize  # Optimización de hiperparámetros
