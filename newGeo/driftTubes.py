@@ -18,10 +18,12 @@ class Wire:
         if self.num_wires == 1:
             return [self.first_pos]
         spacing = (self.last_pos - self.first_pos) / (self.num_wires - 1)
-        return [
-            self.first_pos + i * spacing
-            for i in range(self.num_wires)
-        ]
+        positions = [self.first_pos + i * spacing for i in range(self.num_wires)]
+        # Sanity check (optional)
+        if abs(positions[-1] - self.last_pos) > 1e-6:
+            raise ValueError("Mismatch in wire spacing: last wire does not reach last_pos")
+        return positions
+        
 
 
 class Layer:
@@ -100,18 +102,22 @@ class Layer:
         
     def get_wire_x_position(self, wire_number):
         """
-        Get the X position of a specific wire in this layer.
+        Get the X position of a specific wire in this layer by wire ID.
 
         Parameters:
-        - wire_number (int): The wire number (1-based index).
+        - wire_number (int): The actual channel number (e.g. from channels_first to channels_last)
 
         Returns:
         - float: X position of the wire.
         """
-        if 1 <= wire_number <= self.wires.num_wires:
-            return self.wires.positions[wire_number - 1]
+        index = wire_number - self.channels_first
+        if 0 <= index < self.wires.num_wires:
+            return self.wires.positions[index]
         else:
-            raise ValueError(f"Invalid wire number {wire_number} for Layer {self.layerNumber}")
+            raise ValueError(
+                f"Invalid wire number {wire_number} for Layer {self.layerNumber}. "
+                f"Valid range is [{self.channels_first}, {self.channels_last}]."
+            )
 
 
 class SuperLayer:
